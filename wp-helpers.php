@@ -79,7 +79,7 @@ foreach(['wp_enqueue_scripts', 'admin_enqueue_scripts'] as $hook) {
 if (isset($_GET['wph-update'])) {
 	add_action('init', function() {
 		$file = $_GET['wph-update'];
-		$content = wph_content("https://raw.githubusercontent.com/jeff-silva/wp-helper/master/{$file}");
+		$content = wph_content("https://raw.githubusercontent.com/jeff-silva/wp-helpers/master/{$file}");
 		file_put_contents(__DIR__ .'/'. $file, $content);
 		wp_redirect($_SERVER['HTTP_REFERER']);
 	});
@@ -89,7 +89,7 @@ add_action('admin_menu', function() {
 	add_submenu_page('options-general.php', 'Includes manager', 'Includes manager', 'manage_options', 'wph-includes-manager', function() {
 		global $wph;
 
-		$files = wph_content('https://api.github.com/repos/jeff-silva/wp-helper/contents/');
+		$files = wph_content('https://api.github.com/repos/jeff-silva/wp-helpers/contents/');
 		$files = json_decode($files);
 		$files = is_array($files)? $files: [];
 		foreach($files as $i=>$file) {
