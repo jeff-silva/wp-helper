@@ -172,6 +172,13 @@ function woocommerce_search_filter() {
 }
 
 
+add_shortcode('woocommerce-search-filter', function() {
+	ob_start();
+	woocommerce_search_filter();
+	return ob_get_clean();
+});
+
+
 
 function woocommerce_attr_icon($term, $name=null, $value=null) {
 	global $woocommerce_attr_icon_style;
