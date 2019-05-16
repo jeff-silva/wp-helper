@@ -5,6 +5,7 @@ define('ATTR_IMAGE', 'attr_image');
 define('ATTR_SIGLA', 'attr_sigla');
 
 define('CATEGORY_KEY', 'category');
+define('WOO_SHOP', get_permalink(wc_get_page_id('shop')));
 
 function woocommerce_search_filter() {
 	global $wp_query;
@@ -23,7 +24,7 @@ function woocommerce_search_filter() {
 		echo '</div></aside>';
 	};
 
-	echo '<form action="" method="get" id="wc_filter">';
+	echo '<form action="'. WOO_SHOP .'" method="get" id="wc_filter">';
 
 	$widgetRender('Pesquisar', function() {
 		$input = (object) $_GET;
@@ -40,28 +41,33 @@ function woocommerce_search_filter() {
 	});
 
 	$widgetRender('Categorias', function() {
+		$_href = function($term) {
+			$params = $_GET;
+			$params['post_type'] = 'product';
+			$params[CATEGORY_KEY] = $term->slug;
+			return WOO_SHOP .'?'. http_build_query($params);
+		};
+
 		$category = isset($_GET[CATEGORY_KEY])? $_GET[CATEGORY_KEY]: '';
 		$categories = get_terms('product_cat', array('hide_empty' => false));
+
 		?>
 		<ul class="nav-products-categories">
-			<li class="cart-item">
-				<a href="javascript:;" data-product-cat="">Todos</a>
-			</li>
 			<?php foreach($categories as $term1): if ($term1->parent==0): ?>
-			<li class="cart-item">
-				<a href="javascript:;" data-product-cat="<?php echo $term1->slug; ?>"><?php echo $term1->name; ?></a>
+			<li class="cart-item <?php echo "cart-item-{$term1->slug}"; ?>">
+				<a href="<?php echo $_href($term1); ?>"><?php echo $term1->name; ?></a>
 				<ul>
 					<?php foreach($categories as $term2): if ($term2->parent==$term1->term_id): ?>
-					<li class="cart-item">
-						<a href="javascript:;" data-product-cat="<?php echo $term2->slug; ?>"><?php echo $term2->name; ?></a>
+					<li class="cart-item <?php echo "cart-item-{$term2->slug}"; ?>">
+						<a href="<?php echo $_href($term2); ?>"><?php echo $term2->name; ?></a>
 						<ul>
 							<?php foreach($categories as $term3): if ($term3->parent==$term2->term_id): ?>
-							<li class="cart-item">
-								<a href="javascript:;" data-product-cat="<?php echo $term3->slug; ?>"><?php echo $term3->name; ?></a>
+							<li class="cart-item <?php echo "cart-item-{$term3->slug}"; ?>">
+								<a href="<?php echo $_href($term3); ?>"><?php echo $term3->name; ?></a>
 								<ul>
 									<?php foreach($categories as $term4): if ($term4->parent==$term3->term_id): ?>
-									<li class="cart-item">
-										<a href="javascript:;" data-product-cat="<?php echo $term4->slug; ?>"><?php echo $term4->name; ?></a>
+									<li class="cart-item <?php echo "cart-item-{$term4->slug}"; ?>">
+										<a href="<?php echo $_href($term4); ?>"><?php echo $term4->name; ?></a>
 										<!-- <ul></ul> -->
 									</li>
 									<?php endif; endforeach; ?>
@@ -77,27 +83,7 @@ function woocommerce_search_filter() {
 		</ul>
 
 		<input type="hidden" name="<?php echo CATEGORY_KEY; ?>" value="<?php echo $category; ?>" id="hidden_category" >
-		<script>
-		jQuery(document).ready(function($) {
-			var _productCatSelected = function(term_id) {
-				$("ul.nav-products-categories li").removeClass("cart-item-active");
-				$("[data-product-cat]").each(function() {
-					var cat = $(this).attr("data-product-cat");
-					if (cat==term_id) {
-						$(this).closest("li").addClass("cart-item-active");
-					}
-				});
-			};
-			$("[data-product-cat]").on("click", function() {
-				var term_id = $(this).attr("data-product-cat");
-				$("#hidden_category").val(term_id);
-				_productCatSelected(term_id);
-				$("#wc_filter").submit();
-			});
-			_productCatSelected("<?php echo isset($_GET[CATEGORY_KEY])? $_GET[CATEGORY_KEY]: ''; ?>");
-		});
-		</script>
-		<style>.cart-item.cart-item-active > a {font-weight:bold; text-decoration:underline}</style>
+		<style>.cart-item-<?php echo $category; ?> > a {font-weight:bold; text-decoration:underline}</style>
 		<?php
 	});
 
@@ -262,15 +248,6 @@ class Woocommerce_Full_Filter extends WP_Widget {
 
 }
 
-
-add_action('wp_footer', function() { ?>
-<script>
-jQuery(document).ready(function($) {
-	$("#product_cat").attr("name", "<?php echo CATEGORY_KEY; ?>");
-	$(".searchform.searchform-cats").attr("action", "<?php echo get_permalink( wc_get_page_id( 'shop' ) ); ?>");
-});
-</script>
-<?php });
 
 
 

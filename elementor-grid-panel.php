@@ -106,9 +106,10 @@ if ($manager) {
 				<a href="<?php echo $item->link['url']; ?>" class="wph-gridpanel-each" style="display:block; position:relative; float:left; width:<?php echo $item->width; ?>%; height:<?php echo $item->height; ?>%; padding:<?php echo $item->padding; ?>">
 					<div style="position:relative; width:100%; height:100%; background:url(<?php echo $image_url; ?>) center center no-repeat; background-size:cover;">
 						<div style="position:relative; height:100%; display:flex; align-items:center; justify-content:center;">
+							<div class="wph-gridpanel-bg"></div>
 							<div class="wph-gridpanel-border-tl"></div>
 							<div class="wph-gridpanel-border-br"></div>
-							<div style="max-width:70%; text-align:center;">
+							<div class="wph-gridpanel-text">
 								<?php echo $item->content; ?>
 							</div>
 						</div>
@@ -120,13 +121,18 @@ if ($manager) {
 
 			<style>
 			.wph-gridpanel {}
-			.wph-gridpanel * {transition: all 300ms ease;}
-			.wph-gridpanel-each {}
+			.wph-gridpanel * {transition: all 500ms ease;}
+			.wph-gridpanel-each {text-decoration:none !important;}
+			.wph-gridpanel-bg {position:absolute; top:0px; left:0px; width:100%; height:100%; background:#000000; opacity:0;}
 			.wph-gridpanel-border-tl {position:absolute; top:-10px; left:-10px; border:solid 2px #fff; width:40%; height:40%; border-right:none; border-bottom:none;}
 			.wph-gridpanel-border-br {position:absolute; bottom:-10px; right:-10px; border:solid 2px #fff; width:40%; height:40%; border-left:none; border-top:none;}
-			.wph-gridpanel-each:hover {opacity:.8; z-index:2;}
+			.wph-gridpanel-text {max-width:70%; text-align:center; z-index:2; opacity:0;}
+			.wph-gridpanel-text * {color:#fff;}
+			.wph-gridpanel-each:hover {}
+			.wph-gridpanel-each:hover .wph-gridpanel-bg {opacity:.8;}
 			.wph-gridpanel-each:hover .wph-gridpanel-border-tl {top:10px; left:10px;}
 			.wph-gridpanel-each:hover .wph-gridpanel-border-br {bottom:10px; right:10px;}
+			.wph-gridpanel-each:hover .wph-gridpanel-text {opacity:1;}
 			</style>
 	        <?php
 	    }

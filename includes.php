@@ -20,6 +20,18 @@ if (! function_exists('dd')) {
 	}
 }
 
+function wph_content($url, $post=null) {
+	$method = $post===null? 'GET': 'POST';
+	return file_get_contents($url, false, stream_context_create([
+		'http' => [
+			'method' => $method,
+			'header' => [
+				'User-Agent: PHP',
+			],
+		],
+	]));
+}
+
 $wph->includes = [];
 
 $wph->includes[] = (object) [
