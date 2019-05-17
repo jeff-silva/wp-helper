@@ -35,6 +35,12 @@ function wph_content($url, $post=null) {
 $wph->includes = [];
 
 $wph->includes[] = (object) [
+	'file' => 'elementor-contact-form.php',
+	'title' => 'Elementor Form de contato',
+	'description' => 'Elemento de formulário de contato para Elementor',
+];
+
+$wph->includes[] = (object) [
 	'file' => 'woocommerce-search-filter.php',
 	'title' => 'Woocommerce Filtros',
 	'description' => 'Widget de filtros Woocommerce',
@@ -67,6 +73,7 @@ foreach(['wp_enqueue_scripts', 'admin_enqueue_scripts'] as $hook) {
 		$assets[] = ['wp_enqueue_script', 'bootstrap', 'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js'];
 		$assets[] = ['wp_enqueue_style', 'bootstrap', 'https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css'];
 		$assets[] = ['wp_enqueue_style', 'font-awesome', 'https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css'];
+		$assets[] = ['wp_enqueue_script', 'vue', 'https://cdn.jsdelivr.net/npm/vue@2.6.10/dist/vue.min.js'];
 		foreach($assets as $asset) {
 			$function = array_shift($asset);
 			call_user_func_array($function, array_values($asset));
