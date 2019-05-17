@@ -1,5 +1,9 @@
 <?php
 
+if (! defined('ELEMENTOR_CONTACT_FORM_POSTTYPE')) {
+	define('ELEMENTOR_CONTACT_FORM_POSTTYPE', 'elementor-contacts');
+}
+
 if (! class_exists('Elementor_Contact_Form_Input')) {
 	class Elementor_Contact_Form_Input
 	{
@@ -436,12 +440,25 @@ if (isset($_GET['elementor-contact-form-submit'])) {
 				}
 			}
 
-			$data['resp'] = '<div class="alert alert-success">Formulário enviado</div>';
+			$id = wp_insert_post([
+				'post_type' => ELEMENTOR_CONTACT_FORM_POSTTYPE,
+				'post_title' => $data['subject'],
+				'post_content' => $mail_body,
+			], true);
 
-			$data['captcha']['value'] = '';
-			if (isset($data['fields']) AND is_array($data['fields'])) {
-				foreach($data['fields'] as $i=>$field) {
-					$data['fields'][$i]['value'] = '';
+			if (is_wp_error($id)) {
+				$err = $id->get_error_message();
+				$data['resp'] = "<div class='alert alert-danger'>{$err}</div>";
+			}
+
+			else {
+				$data['resp'] = '<div class="alert alert-success">Formulário enviado</div>';
+
+				$data['captcha']['value'] = '';
+				if (isset($data['fields']) AND is_array($data['fields'])) {
+					foreach($data['fields'] as $i=>$field) {
+						$data['fields'][$i]['value'] = '';
+					}
 				}
 			}
 		}
@@ -449,3 +466,84 @@ if (isset($_GET['elementor-contact-form-submit'])) {
 		echo json_encode($data); die;
 	});
 }
+
+
+
+/* Register post type */
+$register_post_type = function($params=array()) {
+    $params = array_merge(array(
+        'singular' => 'Item',
+        'plural' => 'Items',
+        'slug' => 'item',
+        'supports' => array('title', 'editor', 'author', 'thumbnail', 'excerpt', 'comments', 'elementor'),
+    ), $params);
+
+    $labels = array(
+        'name'                  => $params['plural'],
+        'singular_name'         => $params['singular'],
+        'menu_name'             => $params['plural'],
+        'name_admin_bar'        => $params['singular'],
+        'add_new'               => "Novo(a) {$params['singular']}",
+        'add_new_item'          => "Novo(a) {$params['singular']}",
+        'new_item'              => "Novo(a) {$params['singular']}",
+        'edit_item'             => "Editar {$params['singular']}",
+        'view_item'             => "Ver {$params['singular']}",
+        'all_items'             => "Todos os {$params['plural']}",
+        'search_items'          => "Pesquisar {$params['plural']}",
+        'parent_item_colon'     => "Pai {$params['plural']}:",
+        'not_found'             => "Nenhum {$params['plural']} encontrado.",
+        'not_found_in_trash'    => "Nenhum {$params['plural']} encontrado na lixeira.",
+        'featured_image'        => "Imagem de capa de {$params['singular']}",
+        'set_featured_image'    => "Alterar como imagem de capa",
+        'remove_featured_image' => "Remover imagem de capa",
+        'use_featured_image'    => "Usar como imagem de capa",
+        'archives'              => "Arquivos de {$params['singular']}",
+        'insert_into_item'      => "Inserir dentro de {$params['singular']}",
+        'uploaded_to_this_item' => "Enviado para {$params['singular']}",
+        'filter_items_list'     => "Filtrar lista de {$params['plural']}",
+        'items_list_navigation' => "Lista de navegação de {$params['plural']}",
+        'items_list'            => "Lista de {$params['plural']}",
+    );
+ 
+    $args = array_merge([
+        'labels'             => $labels,
+        'public'             => true,
+        'publicly_queryable' => true,
+        'show_ui'            => true,
+        'show_in_menu'       => true,
+        'query_var'          => true,
+        'rewrite'            => array('slug' => $params['slug']),
+        // 'capability_type'    => 'post',
+        'has_archive'        => true,
+        'hierarchical'       => false,
+        'menu_position'      => 1,
+        'supports'           => $params['supports'],
+    ], $params);
+ 
+    register_post_type($params['slug'], $args);
+};
+
+
+
+$register_post_type([
+	'slug' => ELEMENTOR_CONTACT_FORM_POSTTYPE,
+	'singular' => 'Contato',
+	'plural' => 'Contatos',
+	'public' => false,
+	'hierarchical' => false,
+	'menu_position' => 10,
+	'supports' => ['a'],
+]);
+
+
+add_action('add_meta_boxes', function() {
+	$screens = [ELEMENTOR_CONTACT_FORM_POSTTYPE];
+	foreach ($screens as $screen) {
+		add_meta_box('elementor-contact-form-read', 'Contato', function($post) {
+			?>
+			<?php echo $post->post_content; ?>
+			<style>#submitdiv {display:none;}</style>
+			<?php
+		}, $screen);
+	}
+});
