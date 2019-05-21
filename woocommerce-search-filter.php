@@ -92,6 +92,12 @@ function woocommerce_search_filter() {
 			<input type="hidden" name="min_price" class="form-control" value="<?php echo $input->min_price; ?>" onkeyup="updateSliderData('from', this.value);">
 			<input type="hidden" name="max_price" class="form-control" value="<?php echo $input->max_price; ?>" onkeyup="updateSliderData('to', this.value);">
 			<input type="text" class="form-control wc-filter-range">
+
+			<br>
+			<label>
+				<input type="checkbox" name="on_sale" value="1" <?php echo $input->on_sale==1? 'checked="checked"': null; ?> >
+				<span>Produtos em promoção</span>
+			</label>
 		</div><?php
 	});
 
@@ -107,7 +113,7 @@ function woocommerce_search_filter() {
 					$value = $_GET[$term->taxonomy][$term->slug];
 				}
 
-				echo woocommerce_attr_icon($term, "{$term->taxonomy}[{$term->slug}]", $value) . ' &nbsp; ';
+				echo woocommerce_attr_icon($term, "{$term->taxonomy}[{$term->slug}]", $value);
 				$index++;
 			}
 		});
@@ -207,7 +213,7 @@ function woocommerce_attr_icon($term, $name=null, $value=null) {
 	</label>
 
 	<?php if (! $woocommerce_attr_icon_style): ?><style>
-	.wp-check {cursor:pointer; vertical-align:top;}
+	.wp-check {cursor:pointer; display:inline-block; vertical-align:top;}
 	.wp-check.wp-check-name {}
 	.wp-check.wp-check-icon {}
 	.wc-check-inner {padding:5px 7px; border:solid 3px #ddd; text-align:center; min-height:37px;}
@@ -259,10 +265,18 @@ class Woocommerce_Full_Filter extends WP_Widget {
 
 
 
-add_action('pre_get_posts', function($query) {
+add_action('woocommerce_product_query', function($query) {
+	$input = (object) $_GET;
 
-	$tax_query = [
-		'relation' => 'AND',
+	$params = [
+		'orderby' => 'relevance',
+		'order' => 'DESC',
+		'tax_query' => [
+			'relation' => 'OR',
+		],
+		'meta_query' => [
+			'relation' => 'OR',
+		],
 	];
 
 	// ?pa_color=red
@@ -276,7 +290,7 @@ add_action('pre_get_posts', function($query) {
 
 			// $tax_query = $query->query_vars['tax_query'];
 			// $tax_query['relation'] = 'OR';
-			$tax_query[] = [
+			$params['tax_query'][] = [
 				'taxonomy' => $tax->kname,
 				'field'    => 'slug',
 				'terms'    => $terms,
@@ -289,7 +303,7 @@ add_action('pre_get_posts', function($query) {
 	// ?{CATEGORY_KEY}=bombonieres
 	if (isset($_GET[CATEGORY_KEY]) AND !empty($_GET[CATEGORY_KEY])) {
 		if( !is_admin() && $query->is_main_query() ) {
-			$tax_query[] = [
+			$params['tax_query'][] = [
 				'taxonomy' => 'product_cat',
 				'field'    => 'slug',
 				'terms'    => $_GET[CATEGORY_KEY],
@@ -297,8 +311,60 @@ add_action('pre_get_posts', function($query) {
 		}
 	}
 
+	if ($input->min_price OR $input->max_price) {
+		$params['meta_query'][] = [
+			'relation' => 'OR',
+			[
+				'key' => '_price',
+				'value' => [$input->min_price, $input->max_price],
+				'compare' => 'BETWEEN',
+				'type' => 'NUMERIC',
+			],
 
-	$query->set('tax_query', $tax_query);
+			[
+				'key' => '_sale_price',
+				'value' => [$input->min_price, $input->max_price],
+				'compare' => 'BETWEEN',
+				'type' => 'NUMERIC',
+			],
+
+			[
+				'key' => '_min_variation_sale_price',
+				'value' => [$input->min_price, $input->max_price],
+				'compare' => 'BETWEEN',
+				'type' => 'NUMERIC',
+			],
+		];
+	}
+
+	if ($input->on_sale==1) {
+		$params['post__in'] = (array) wc_get_product_ids_on_sale();
+		$params['orderby'] = 'ID';
+		$params['meta_query'] = [];
+		$params['tax_query'] = [];
+
+		$params['meta_query'] = [
+			'relation' => 'OR',
+			[
+				'key' => '_sale_price',
+				'value' => 0,
+				'compare' => '>',
+				'type' => 'NUMERIC'
+			],
+			[
+				'key' => '_min_variation_sale_price',
+				'value' => 0,
+				'compare' => '>',
+				'type' => 'NUMERIC'
+			],
+		];
+	}
+
+	foreach($params as $key=>$val) {
+		$query->set($key, $val);
+	}
+
+	// dd($query);
 });
 
 
