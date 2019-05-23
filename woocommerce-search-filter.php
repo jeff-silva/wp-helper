@@ -20,7 +20,7 @@ function woocommerce_search_filter() {
 
 	$widgetRender = function($title, $call) {
 		echo "<aside class='widget woocommerce widget_product_categories'><h4 class='widget-title'>{$title}<span class='toggle'></span></h4><div>";
-		call_user_func($call, $this);
+		call_user_func($call);
 		echo '</div></aside>';
 	};
 
