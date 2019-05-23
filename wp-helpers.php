@@ -32,37 +32,63 @@ function wph_content($url, $post=null) {
 	]));
 }
 
-$wph->includes = [];
+function wph_plugins() {
+	global $wph_plugins;
 
-$wph->includes[] = (object) [
-	'file' => 'elementor-contact-form.php',
-	'title' => 'Elementor Form de contato',
-	'description' => 'Elemento de formulário de contato para Elementor',
-];
+	if (! $wph_plugins) {
+		$wph_plugins = [];
+		$includes = glob(__DIR__ . '/*.php');
+		foreach($includes as $file) {
+			$info = (object) pathinfo($file);
+			if ($info->basename=='wp-helpers.php') continue;
+			$plugin = (object) get_plugin_data($file);
+			$plugin->file = $file;
+			$plugin->Name = $plugin->Name? $plugin->Name: ucwords(str_replace('-', ' ', $info->filename));
+			$wph_plugins[ $info->basename ] = $plugin;
+		}
+	}
 
-$wph->includes[] = (object) [
-	'file' => 'woocommerce-search-filter.php',
-	'title' => 'Woocommerce Filtros',
-	'description' => 'Widget de filtros Woocommerce',
-];
-
-$wph->includes[] = (object) [
-	'file' => 'elementor-grid-panel.php',
-	'title' => 'Elementor Grid Panel',
-	'description' => 'Gerenciador de grid de elementos Elementor',
-];
-
-
-
-
-foreach($wph->includes as $include) {
-	$include->exists = file_exists(__DIR__ .'/'. $include->file);
+	return $wph_plugins;
 }
 
-foreach($wph->includes as $include) {
-	if ($include->exists) {
-		include $include->file;
+
+function wph_source_plugins() {
+	global $wph_source_plugins;
+
+	if (! $wph_source_plugins) {
+		$plugins = wph_plugins();
+		$wph_source_plugins = [];
+		$defaults = array(
+			'Name'        => '',
+			'PluginURI'   => '',
+			'Version'     => '',
+			'Description' => '',
+			'Author'      => '',
+			'AuthorURI'   => '',
+			'TextDomain'  => '',
+			'DomainPath'  => '',
+			'Network'     => '',
+		);
+
+		$files = wph_content('https://api.github.com/repos/jeff-silva/wp-helpers/contents/');
+		$files = json_decode($files);
+		$files = is_array($files)? $files: [];
+		foreach($files as $file) {
+			if ($file->name=='wp-helpers.php') continue;
+			$plugin = (object) array_merge($defaults, (array) $file);
+			$plugin->Name = ucwords(str_replace('-', ' ', pathinfo($file->name, PATHINFO_FILENAME)));
+			$plugin->url = $file->download_url;
+			$plugin->installed = isset($plugins[ $plugin->name ]);
+			$wph_source_plugins[ $file->name ] = $plugin;
+		}
 	}
+
+	return $wph_source_plugins;
+}
+
+
+foreach(wph_plugins() as $include) {
+	include $include->file;
 }
 
 
@@ -96,17 +122,6 @@ add_action('admin_menu', function() {
 	add_submenu_page('options-general.php', 'Includes manager', 'Includes manager', 'manage_options', 'wph-includes-manager', function() {
 		global $wph;
 
-		$files = wph_content('https://api.github.com/repos/jeff-silva/wp-helpers/contents/');
-		$files = json_decode($files);
-		$files = is_array($files)? $files: [];
-		foreach($files as $i=>$file) {
-			if (in_array($file->name, ['README.md'])) {
-				unset($files[$i]);
-				continue;
-			}
-			$file->file_exists = file_exists(__DIR__ .'/'. $file->name);
-		}
-
 		?><br>
 		<table class="table table-bordered">
 			<colgroup>
@@ -120,13 +135,13 @@ add_action('admin_menu', function() {
 				</tr>
 			</thead>
 			<tbody>
-				<?php foreach($files as $file): ?>
+				<?php foreach(wph_source_plugins() as $file): ?>
 				<tr>
 					<td>
-						<div><strong><?php echo $file->name; ?></strong></div>
+						<div><strong><?php echo $file->Name; ?></strong></div>
 					</td>
 					<td>
-						<a href="?wph-update=<?php echo $file->name; ?>" class="btn btn-secondary btn-block"><?php echo $file->file_exists? 'Refresh': 'Download'; ?></a>
+						<a href="?wph-update=<?php echo $file->name; ?>" class="btn btn-secondary btn-block"><?php echo $file->installed? 'Refresh': 'Download'; ?></a>
 					</td>
 				</tr>
 				<?php endforeach; ?>
