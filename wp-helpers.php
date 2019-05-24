@@ -118,6 +118,17 @@ if (isset($_GET['wph-update'])) {
 	});
 }
 
+
+/* Delete file */
+if (isset($_GET['wph-delete'])) {
+	add_action('init', function() {
+		$file = $_GET['wph-delete'];
+		unlink(__DIR__ . "/{$file}");
+		wp_redirect($_SERVER['HTTP_REFERER']);
+	});
+}
+
+
 add_action('admin_menu', function() {
 	add_submenu_page('options-general.php', 'Includes manager', 'Includes manager', 'manage_options', 'wph-includes-manager', function() {
 		global $wph;
@@ -141,7 +152,13 @@ add_action('admin_menu', function() {
 						<div><strong><?php echo $file->Name; ?></strong></div>
 					</td>
 					<td>
-						<a href="?wph-update=<?php echo $file->name; ?>" class="btn btn-secondary btn-block"><?php echo $file->installed? 'Refresh': 'Download'; ?></a>
+						<?php if ($file->installed): ?>
+						<a href="?wph-update=<?php echo $file->name; ?>" class="btn btn-primary"><i class="fa fa-fw fa-refresh"></i></a>
+						<a href="?wph-delete=<?php echo $file->name; ?>" class="btn btn-danger" onclick="return confirm('Deseja deletar?');"><i class="fa fa-fw fa-remove"></i></a>
+
+						<?php else: ?>
+						<a href="?wph-update=<?php echo $file->name; ?>" class="btn btn-success"><i class="fa fa-fw fa-download"></i></a>
+						<?php endif; ?>
 					</td>
 				</tr>
 				<?php endforeach; ?>
