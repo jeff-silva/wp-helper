@@ -7,6 +7,11 @@ Name: Wooxcel
 
 class WooxcelApi
 {
+	static function product_save($prod)
+	{
+		return [$prod, $prod];
+	}
+
 	// from: https://stackoverflow.com/questions/46874020/delete-a-product-by-id-using-php-in-woocommerce
 	static function product_delete($product_id)
 	{
@@ -59,22 +64,22 @@ function wooxcel_search() {
 			<button type="buttpn" @click="productsParams.page++; _productSearch();">&raquo;</button>
 		</div>
 
-		<table>
+		<table style="width:100%;">
 			<colgroup>
-				<col width="20px">
+				<col width="50px">
+				<col width="150px">
 				<col width="*">
-				<col width="150px">
-				<col width="150px">
-				<col width="50px">
-				<col width="50px">
-				<col width="50px">
-				<col width="50px">
+				<col width="60px">
+				<col width="60px">
+				<col width="60px">
+				<col width="60px">
+				<col width="60px">
+				<col width="60px">
 				<col width="50px">
 				<col width="50px">
 			</colgroup>
 			<thead>
 				<tr>
-					<th>ID</th>
 					<th>images</th>
 					<th>SKU</th>
 					<th>Name</th>
@@ -87,19 +92,18 @@ function wooxcel_search() {
 				</tr>
 			</thead>
 			<tbody v-if="productResp">
-				<tr v-for="prod in productResp">
-					<td>#{{ prod.id }}</td>
-					<td><img :src="img.src" alt="" style="height:25px;" v-for="img in prod.images"></td>
-					<td><input type="text" v-model="prod.sku"></td>
-					<td><input type="text" v-model="prod.name"></td>
-					<td><input type="text" v-model="prod.price"></td>
-					<td><input type="text" v-model="prod.regular_price"></td>
-					<td><input type="text" v-model="prod.sale_price"></td>
-					<td><input type="text" v-model="prod.dimensions.length"></td>
-					<td><input type="text" v-model="prod.dimensions.width"></td>
-					<td><input type="text" v-model="prod.dimensions.height"></td>
-					<td><button type="button">save</button></td>
-					<td><button type="button" @click="_productDelete(prod);">delete</button></td>
+				<tr :class="'row-'+prod.id" v-for="prod in productResp">
+					<td style="background:url() center center; background-size:cover;" :style="'background-image:url('+(prod.images[0]? prod.images[0].src: null)+')'"></td>
+					<td><input type="text" class="form-control" v-model="prod.sku"></td>
+					<td><input type="text" class="form-control" v-model="prod.name"></td>
+					<td><input type="text" class="form-control" v-model="prod.price"></td>
+					<td><input type="text" class="form-control" v-model="prod.regular_price"></td>
+					<td><input type="text" class="form-control" v-model="prod.sale_price"></td>
+					<td><input type="text" class="form-control" v-model="prod.dimensions.length"></td>
+					<td><input type="text" class="form-control" v-model="prod.dimensions.width"></td>
+					<td><input type="text" class="form-control" v-model="prod.dimensions.height"></td>
+					<td><button type="button" class="btn btn-primary btn-block" @click="_productSave(prod, '.row-'+prod.id);"><i class="fa fa-fw fa-save"></i></button></td>
+					<td><button type="button" class="btn btn-danger btn-block" @click="_productDelete(prod);"><i class="fa fa-fw fa-remove"></i></button></td>
 				</tr>
 			</tbody>
 		</table>
@@ -133,7 +137,7 @@ function wooxcel_search() {
 				var vm=this, $=jQuery, ajax={};
 				ajax.response = function() {};
 				ajax.then = function(callback) { ajax.response = callback; };
-				$.get("<?php echo site_url(); ?>", {wooxcel:"<?php echo $method; ?>", args:arguments}, function(resp) {
+				$.post("<?php echo site_url(); ?>", {wooxcel:"<?php echo $method; ?>", args:arguments}, function(resp) {
 					ajax.response(resp.data, resp.error);
 				}, "json");
 				return ajax;
@@ -160,6 +164,15 @@ function wooxcel_search() {
 					vm._productSearch();
 				});
 			},
+
+			_productSave: function(prod, target) {
+				var vm=this, $=jQuery;
+				if (target) $(target).css({opacity:.5});
+				vm.__product_save(prod).then(function(data, error) {
+					if (target) $(target).css({opacity:1});
+					vm._productSearch();
+				});
+			},
 		},
 
 		mounted: function() {
@@ -182,11 +195,11 @@ add_action('admin_menu', function() {
 
 
 
-if (isset($_GET['wooxcel'])) {
+if (isset($_POST['wooxcel'])) {
 	add_action('init', function() {
-		$call = ['WooxcelApi', $_GET['wooxcel']];
+		$call = ['WooxcelApi', $_POST['wooxcel']];
 
-		$args = isset($_GET['args'])? $_GET['args']: [];
+		$args = isset($_POST['args'])? $_POST['args']: [];
 		$args = isset($_POST['args'])? $_POST['args']: $args;
 		$resp = (object) ['data'=>false, 'args'=>$args, 'error'=>[]];
 
