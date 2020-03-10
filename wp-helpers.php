@@ -1,5 +1,7 @@
 <?php
 
+define('THEMEDIR', get_template_directory_uri());
+
 if (! function_exists('dd')) {
 	function dd() {
 		foreach(func_get_args() as $data) {
