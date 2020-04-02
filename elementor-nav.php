@@ -87,6 +87,13 @@ add_action('elementor/widgets/widgets_registered', function($manager) {
 				],
 			]);
 
+			$this->add_control('fixed', [
+				'label' => 'Fixo',
+				'type' => \Elementor\Controls_Manager::SWITCHER,
+				'default' => false,
+				'label_block' => true,
+			]);
+
 			$this->add_control('css', [
 				'label' => 'CSS',
 				'type' => \Elementor\Controls_Manager::CODE,
@@ -207,6 +214,28 @@ add_action('elementor/widgets/widgets_registered', function($manager) {
 				$("#<?php echo $set->id; ?>").on("click", "a", function(ev) {
 					$("#<?php echo $set->navid; ?>").collapse('hide');
 				});
+
+				<?php if ($set->fixed): ?> 
+				var handleFixedNavPosition = function() {
+					var adminBarHeight = $("#wpadminbar").height() || 0;
+
+					var $parent = $("#<?php echo $set->id; ?>").closest(".elementor-section-wrap").css({
+						position: "fixed",
+						top: adminBarHeight,
+						left: 0,
+						width: "100%",
+						zIndex: 99,
+					});
+
+					$('.elementor-nav-fixed-spacer').remove();
+					var $spacer = $('<div class="elementor-nav-fixed-spacer" style="height:'+(adminBarHeight+60)+'px;"></div>');
+					$("body").prepend($spacer);
+				};
+
+				handleFixedNavPosition();
+				$(window).on("resize", handleFixedNavPosition);
+
+				<?php endif; ?>
 			});</script>
 			<!-- elementor-nav final | <?php echo $set->walker; ?> -->
 			<?php
