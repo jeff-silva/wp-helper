@@ -227,8 +227,10 @@ add_action('elementor/widgets/widgets_registered', function($manager) {
 						zIndex: 99,
 					});
 
+					var parentHeight = $parent.height() || 0;
+
 					$('.elementor-nav-fixed-spacer').remove();
-					var $spacer = $('<div class="elementor-nav-fixed-spacer" style="height:'+(adminBarHeight+60)+'px;"></div>');
+					var $spacer = $('<div class="elementor-nav-fixed-spacer" style="height:'+(parentHeight-1)+'px;"></div>');
 					$("body").prepend($spacer);
 				};
 
